@@ -198,7 +198,7 @@
                 <div id="durum"></div>
             </div>
             <div class="action-buttons">
-                <button class="btn btn-success" onclick="onaylaRezervasyon()">Onayla</button>
+                <button class="btn btn-success" onclick="onaylaRezervasyon(currentRezervasyonId)">Onayla</button>
                 <button class="btn btn-danger" onclick="reddetRezervasyon()">Reddet</button>
             </div>
             <div class="print-button-container">
@@ -278,12 +278,12 @@
         }
 
         // Rezervasyon onaylama
-        async function onaylaRezervasyon() {
+        async function onaylaRezervasyon(rezervasyonKodu) {
             if (!currentRezervasyonId) {
                 alert('Rezervasyon ID bulunamadı!');
                 return;
             }
-
+debugger;
             const onaylaBtn = document.querySelector('.btn-success');
             const reddetBtn = document.querySelector('.btn-danger');
             
@@ -292,30 +292,26 @@
                 reddetBtn.disabled = true;
                 onaylaBtn.textContent = 'Onaylanıyor...';
 
-                const url = `/api/rezervasyon/${currentRezervasyonId}/onay`;
-                console.log('İstek URL:', url);
-
-                // Promise.race ile timeout kontrolü
-                const fetchPromise = fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
-                });
-
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 5000);
-                });
-
-                const response = await Promise.race([fetchPromise, timeoutPromise]);
+ 
                 
+
+                const url = `/api/rezervasyon/${rezervasyonKodu}`;
+                
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        onayDurumu: 'Onaylandı'
+                    })
+                });
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log('Yanıt:', data);
 
                 if (data.error) {
                     throw new Error(data.error);
@@ -330,11 +326,7 @@
 
             } catch (error) {
                 console.error('Onaylama hatası:', error);
-                if (error.message.includes('zaman aşımı')) {
-                    alert('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
-                } else {
-                    alert('Onaylama sırasında bir hata oluştu: ' + error.message);
-                }
+                alert('Onaylama sırasında bir hata oluştu: ' + error.message);
             } finally {
                 onaylaBtn.disabled = false;
                 reddetBtn.disabled = false;
