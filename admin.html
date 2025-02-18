@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rezervasyon Yönetim Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            position: relative;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .rezervasyon-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .rezervasyon-table th,
+        .rezervasyon-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rezervasyon-table th {
+            background: #f8f9fa;
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .rezervasyon-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #e0e0e0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .filter-button.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .action-button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-button {
+            background: #ff4444;
+            color: white;
+        }
+
+        .edit-button {
+            background: #4CAF50;
+            color: white;
+            margin-right: 5px;
+        }
+
+        /* Çıkış butonu için stil */
+        .logout-button {
+            /* Bu kısmı silelim */
+        }
+
+        .durum-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .durum-onaylandi {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .durum-onaylanmadi {
+            background-color: #ffeeba;
+            color: #856404;
+        }
+
+        /* İstatistik kartları için güncelleme */
+        .stat-card.katilim {
+            background: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <h1>Rezervasyon Yönetim Paneli</h1>
+            <div class="date">
+                <span id="currentDate"></span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Toplam Rezervasyon</h3>
+                <div class="value" id="totalReservations">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Bugünkü Rezervasyonlar</h3>
+                <div class="value" id="todayReservations">0</div>
+            </div>
+            <div class="stat-card katilim">
+                <h3>Katılım Gösteren</h3>
+                <div class="value" id="approvedReservations">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Doluluk Oranı</h3>
+                <div class="value" id="occupancyRate">0%</div>
+            </div>
+        </div>
+
+        <input type="text" class="search-bar" placeholder="Ad, email veya koltuk numarasına göre ara..." id="searchInput">
+
+        <div class="filter-section">
+            <button class="filter-button active" data-filter="all">Tümü</button>
+            <button class="filter-button" data-filter="today">Bugün</button>
+            <button class="filter-button" data-filter="thisWeek">Bu Hafta</button>
+        </div>
+
+        <table class="rezervasyon-table">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Ad Soyad</th>
+                    <th>Email</th>
+                    <th>Bölüm</th>
+                    <th>Koltuk No</th>
+                    <th>Katılım Durumu</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="rezervasyonList">
+                <!-- JavaScript ile doldurulacak -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Token kontrolünü ve ilgili kodları tamamen kaldıralım
+        // fetchWithAuth fonksiyonunu basitleştirelim
+        async function fetchWithAuth(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response;
+            } catch (error) {
+                console.error('Fetch hatası:', error);
+                throw error;
+            }
+        }
+
+        // Rezervasyonları yükle fonksiyonunu güncelleyelim
+        async function loadReservations() {
+            try {
+                console.log('Rezervasyonlar yükleniyor...'); // Debug için
+                const response = await fetch('/api/rezervasyonlar');
+                console.log('Response status:', response.status); // Debug için
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Yüklenen rezervasyonlar:', data); // Debug için
+                
+                updateStats(data);
+                displayReservations(data);
+            } catch (error) {
+                console.error('Rezervasyonlar yüklenirken hata:', error);
+            }
+        }
+
+        // İstatistikleri güncelle
+        function updateStats(data) {
+            const totalReservations = data.length;
+            const approvedReservations = data.filter(r => r.onayDurumu === 'Onaylandı').length;
+            const today = new Date().toISOString().split('T')[0];
+            const todayReservations = data.filter(r => 
+                r.tarih.split('T')[0] === today
+            ).length;
+            
+            document.getElementById('totalReservations').textContent = totalReservations;
+            document.getElementById('todayReservations').textContent = todayReservations;
+            document.getElementById('approvedReservations').textContent = approvedReservations;
+            
+            // Doluluk oranı
+            const occupancyRate = ((totalReservations / 789) * 100).toFixed(1);
+            document.getElementById('occupancyRate').textContent = `${occupancyRate}%`;
+        }
+
+        // Rezervasyonları tabloda göster
+        function displayReservations(data) {
+            const tbody = document.getElementById('rezervasyonList');
+            tbody.innerHTML = '';
+
+            data.forEach(reservation => {
+                const tr = document.createElement('tr');
+                const tarih = new Date(reservation.tarih).toLocaleString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Katılım durumu için stil
+                const durumStili = reservation.onayDurumu === 'Onaylandı' 
+                    ? 'background-color: #d4edda; color: #155724; padding: 5px 10px; border-radius: 15px;'
+                    : 'background-color: #ffeeba; color: #856404; padding: 5px 10px; border-radius: 15px;';
+
+                tr.innerHTML = `
+                    <td>${tarih}</td>
+                    <td>${reservation.adSoyad}</td>
+                    <td>${reservation.email}</td>
+                    <td>${reservation.bolum} - ${reservation.altBolum}</td>
+                    <td>${reservation.siraNo}-${reservation.koltukNo}</td>
+                    <td><span style="${durumStili}">${reservation.onayDurumu || 'Onaylanmadı'}</span></td>
+                    <td>
+                        <button class="action-button edit-button" onclick="editReservation('${reservation._id}')">Düzenle</button>
+                        <button class="action-button delete-button" onclick="deleteReservation('${reservation._id}')">Sil</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Arama fonksiyonu
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchText = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#rezervasyonList tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchText) ? '' : 'none';
+            });
+        });
+
+        // Rezervasyon silme fonksiyonu
+        async function deleteReservation(id) {
+            if (!confirm('Bu rezervasyonu silmek istediğinizden emin misiniz?')) return;
+
+            try {
+                const response = await fetchWithAuth(`/api/rezervasyon/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Rezervasyon başarıyla silindi');
+                    await loadReservations(); // Listeyi yenile
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Silme işlemi başarısız');
+                }
+            } catch (error) {
+                console.error('Silme hatası:', error);
+                alert('Silme işlemi sırasında bir hata oluştu: ' + error.message);
+            }
+        }
+
+        // Rezervasyon düzenleme fonksiyonu
+        async function editReservation(id) {
+            try {
+                const response = await fetchWithAuth(`/api/rezervasyon/${id}`);
+                if (!response.ok) {
+                    throw new Error('Rezervasyon bilgileri alınamadı');
+                }
+
+                const reservation = await response.json();
+                const newAdSoyad = prompt('Ad Soyad:', reservation.adSoyad);
+                const newEmail = prompt('Email:', reservation.email);
+
+                if (!newAdSoyad || !newEmail) return;
+
+                const updateResponse = await fetchWithAuth(`/api/rezervasyon/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        adSoyad: newAdSoyad,
+                        email: newEmail
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json();
+                    throw new Error(errorData.error || 'Güncelleme başarısız');
+                }
+
+                alert('Rezervasyon başarıyla güncellendi');
+                await loadReservations(); // Listeyi yenile
+            } catch (error) {
+                console.error('Güncelleme hatası:', error);
+                alert('Güncelleme işlemi sırasında bir hata oluştu: ' + error.message);
+            }
+        }
+
+        // Filtreleme fonksiyonu
+        document.querySelectorAll('.filter-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const filterType = this.dataset.filter;
+                const rows = document.querySelectorAll('#rezervasyonList tr');
+                
+                document.querySelectorAll('.filter-button').forEach(btn => 
+                    btn.classList.remove('active')
+                );
+                this.classList.add('active');
+
+                rows.forEach(row => {
+                    const date = new Date(row.cells[0].textContent);
+                    const today = new Date();
+                    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+                    switch(filterType) {
+                        case 'today':
+                            row.style.display = date.toDateString() === today.toDateString() ? '' : 'none';
+                            break;
+                        case 'thisWeek':
+                            row.style.display = date >= weekAgo ? '' : 'none';
+                            break;
+                        default: // 'all'
+                            row.style.display = '';
+                    }
+                });
+            });
+        });
+
+        // Sayfa yüklendiğinde rezervasyonları yükle
+        document.addEventListener('DOMContentLoaded', () => {
+            loadReservations();
+            
+            // Güncel tarihi göster
+            document.getElementById('currentDate').textContent = 
+                new Date().toLocaleDateString('tr-TR', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+        });
+
+        // Çıkış yapma fonksiyonunu ve butonunu kaldıralım
+        // Bu kısmı silelim
+        function logout() {
+            localStorage.clear();
+            document.location = '/admin';
+        }
+
+        // Header'daki çıkış butonunu kaldıralım
+        // Bu kısmı silelim
+        const headerDiv = document.querySelector('.header');
+        headerDiv.innerHTML += `
+            <button onclick="logout()" class="logout-button">Çıkış Yap</button>
+        `;
+    </script>
+</body>
+</html> 

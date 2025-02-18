@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rezervasyon Doğrulama</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .scanner-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .result-container {
+            display: none;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .result-container.success {
+            display: block;
+            border: 1px solid #28a745;
+        }
+
+        .result-container.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+
+        .result-info {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .result-info div {
+            padding: 8px;
+        }
+
+        .result-info div:nth-child(odd) {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.pending {
+            background: #ffeeba;
+            color: #856404;
+        }
+
+        .status-badge.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .print-button-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .print-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .print-button:hover {
+            background-color: #218838;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .result-container, .result-container * {
+                visibility: visible;
+            }
+            .result-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                display: block !important;
+            }
+            .action-buttons, .print-button-container {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Rezervasyon Doğrulama</h1>
+            <p>QR kodu okutarak rezervasyon bilgilerini görüntüleyin</p>
+        </div>
+
+        <div class="scanner-container" id="reader"></div>
+
+        <div class="result-container" id="resultContainer">
+            <h3>Rezervasyon Bilgileri</h3>
+            <div class="result-info">
+                <div>Ad Soyad:</div>
+                <div id="adSoyad"></div>
+                <div>Koltuk:</div>
+                <div id="koltuk"></div>
+                <div>Tarih:</div>
+                <div id="tarih"></div>
+                <div>Durum:</div>
+                <div id="durum"></div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="onaylaRezervasyon()">Onayla</button>
+                <button class="btn btn-danger" onclick="reddetRezervasyon()">Reddet</button>
+            </div>
+            <div class="print-button-container">
+                <button class="print-button" onclick="yazdir()">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                    </svg>
+                    Yazdır
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRezervasyonId = null;
+        let html5QrcodeScanner;
+        let html5Qrcode;
+        let isScanning = false;
+
+        // QR tarayıcıyı başlat
+        function initScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", { fps: 10, qrbox: 250 }
+            );
+            html5Qrcode = new Html5Qrcode("reader");
+            html5QrcodeScanner.render(onScanSuccess);
+            isScanning = true;
+        }
+
+        // QR kod başarıyla okunduğunda
+        async function onScanSuccess(decodedText) {
+            try {
+                // Taramayı durdur ve kamerayı kapat
+                if (isScanning) {
+                    try {
+                        await html5Qrcode.stop();
+                        document.getElementById('reader').style.display = 'none'; // Kamera alanını gizle
+                    } catch (error) {
+                        console.error('Stop error:', error);
+                    }
+                    isScanning = false;
+                }
+
+                console.log('QR Kod içeriği:', decodedText);
+                const kod = decodedText.split('/').pop();
+                
+                const response = await fetch(`/dogrula/${kod}`);
+                const data = await response.json();
+                
+                if (data.valid) {
+                    const rezervasyon = data.rezervasyon;
+                    currentRezervasyonId = rezervasyon._id;
+                    
+                    document.getElementById('adSoyad').textContent = rezervasyon.adSoyad;
+                    document.getElementById('koltuk').textContent = rezervasyon.koltuk;
+                    document.getElementById('tarih').textContent = new Date(rezervasyon.tarih)
+                        .toLocaleString('tr-TR');
+                    document.getElementById('durum').innerHTML = `
+                        <span class="status-badge ${rezervasyon.onayDurumu === 'Onaylandı' ? 'approved' : 'pending'}">
+                            ${rezervasyon.onayDurumu}
+                        </span>
+                    `;
+
+                    const resultContainer = document.getElementById('resultContainer');
+                    resultContainer.style.display = 'block';
+                    resultContainer.className = 'result-container success';
+                } else {
+                    alert('Geçersiz QR kod: ' + (data.error || 'Bilinmeyen hata'));
+                    window.location.reload(); // Sayfayı yenile
+                }
+            } catch (error) {
+                console.error('Doğrulama hatası:', error);
+                alert('Doğrulama işlemi başarısız: ' + error.message);
+                window.location.reload(); // Sayfayı yenile
+            }
+        }
+
+        // Rezervasyon onaylama
+        async function onaylaRezervasyon() {
+            if (!currentRezervasyonId) {
+                alert('Rezervasyon ID bulunamadı!');
+                return;
+            }
+
+            const onaylaBtn = document.querySelector('.btn-success');
+            const reddetBtn = document.querySelector('.btn-danger');
+            
+            try {
+                onaylaBtn.disabled = true;
+                reddetBtn.disabled = true;
+                onaylaBtn.textContent = 'Onaylanıyor...';
+
+                const url = `/api/rezervasyon/${currentRezervasyonId}/onay`;
+                console.log('İstek URL:', url);
+
+                // Promise.race ile timeout kontrolü
+                const fetchPromise = fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 5000);
+                });
+
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Yanıt:', data);
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                document.getElementById('durum').innerHTML = `
+                    <span class="status-badge approved">Onaylandı</span>
+                `;
+
+                alert('Rezervasyon başarıyla onaylandı');
+                location.reload();
+
+            } catch (error) {
+                console.error('Onaylama hatası:', error);
+                if (error.message.includes('zaman aşımı')) {
+                    alert('İstek zaman aşımına uğradı. Lütfen tekrar deneyin.');
+                } else {
+                    alert('Onaylama sırasında bir hata oluştu: ' + error.message);
+                }
+            } finally {
+                onaylaBtn.disabled = false;
+                reddetBtn.disabled = false;
+                onaylaBtn.textContent = 'Onayla';
+            }
+        }
+
+        // Reddetme işlemi
+        function reddetRezervasyon() {
+            window.location.reload(); // Sayfayı yenile
+        }
+
+        // Yazdırma fonksiyonu
+        function yazdir() {
+            window.print();
+        }
+
+        // Sayfa yüklendiğinde tarayıcıyı başlat
+        document.addEventListener('DOMContentLoaded', initScanner);
+    </script>
+</body>
+</html> 

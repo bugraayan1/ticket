@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Konferans Salonu Bilet Rezervasyon Sistemi</title>
+    <!-- Font Awesome ve Google Fonts ekliyoruz -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .salon-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .sahne {
+            width: 80%;
+            height: 80px;
+            background: linear-gradient(45deg, #1a2a6c, #b21f1f, #fdbb2d);
+            margin: 0 auto 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sahne::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2));
+        }
+
+        .bolum-grup {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 8px;
+        }
+
+        .alt-bolum {
+            flex: 1;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            min-width: 0;
+        }
+
+        .alt-bolum:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .alt-bolum-baslik {
+            font-size: 0.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .sira {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            margin-bottom: 3px;
+        }
+
+        .koltuk {
+            width: 28px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+            position: relative;
+            margin: 1px;
+        }
+
+        .koltuk::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 24px;
+            background: #fff;
+            border: 2px solid #3498db;
+            border-radius: 5px 5px 0 0;
+            top: 0;
+        }
+
+        .koltuk::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 6px;
+            background: #3498db;
+            border: 2px solid #3498db;
+            border-radius: 0 0 3px 3px;
+            bottom: 2px;
+        }
+
+        .koltuk:not(.rezerve):not(.protokol):not(.kurumDisi):hover {
+            transform: scale(1.1);
+        }
+
+        .koltuk:not(.rezerve):not(.protokol):not(.kurumDisi):hover::before {
+            border-color: #2980b9;
+            background: #f8f9fa;
+        }
+
+        .koltuk:not(.rezerve):not(.protokol):not(.kurumDisi):hover::after {
+            background: #2980b9;
+            border-color: #2980b9;
+        }
+
+        /* Rezerve edilmiş koltuk */
+        .koltuk.rezerve::before {
+            border-color: #e74c3c;
+            background: #ffd5d5;
+        }
+
+        .koltuk.rezerve::after {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        /* Protokol koltuğu */
+        .koltuk.protokol::before {
+            border-color: #2ecc71;
+            background: #d5ffd5;
+        }
+
+        .koltuk.protokol::after {
+            background: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        /* Kurum dışı koltuğu */
+        .koltuk.kurumDisi::before {
+            border-color: #f1c40f;
+            background: #fff6d5;
+        }
+
+        .koltuk.kurumDisi::after {
+            background: #f1c40f;
+            border-color: #f1c40f;
+        }
+
+        .lejant {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .lejant-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+        }
+
+        .lejant-koltuk {
+            position: relative;
+            width: 28px;
+            height: 32px;
+        }
+
+        .lejant-koltuk::before {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 24px;
+            background: #fff;
+            border: 2px solid #3498db;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .lejant-koltuk::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 6px;
+            background: #3498db;
+            border: 2px solid #3498db;
+            border-radius: 0 0 3px 3px;
+            bottom: 2px;
+            left: 4px;
+        }
+
+        /* Lejant için özel renkler */
+        .lejant-koltuk.rezerve::before {
+            border-color: #e74c3c;
+            background: #ffd5d5;
+        }
+        .lejant-koltuk.rezerve::after {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .lejant-koltuk.protokol::before {
+            border-color: #2ecc71;
+            background: #d5ffd5;
+        }
+        .lejant-koltuk.protokol::after {
+            background: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        .lejant-koltuk.kurumDisi::before {
+            border-color: #f1c40f;
+            background: #fff6d5;
+        }
+        .lejant-koltuk.kurumDisi::after {
+            background: #f1c40f;
+            border-color: #f1c40f;
+        }
+
+        .form-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            width: 400px;
+        }
+
+        .form-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-container button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .form-container button:hover {
+            background: #2980b9;
+        }
+
+        .form-container button[type="button"] {
+            background: #95a5a6;
+        }
+
+        .form-container button[type="button"]:hover {
+            background: #7f8c8d;
+        }
+
+        /* Overlay arka plan için */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .notification.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: #2ecc71;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .qr-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            text-align: center;
+            display: none;
+            z-index: 1001;
+        }
+
+        .qr-modal.show {
+            display: block;
+        }
+
+        .qr-modal img {
+            max-width: 200px;
+            margin: 20px 0;
+        }
+
+        .qr-modal-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .qr-modal-text {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .qr-modal-button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .qr-modal-button:hover {
+            background: #2980b9;
+        }
+
+        .print-button-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .print-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .print-button:hover {
+            background-color: #218838;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #biletContainer, #biletContainer * {
+                visibility: visible;
+            }
+            #biletContainer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .print-button-container {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay div'i ekliyoruz -->
+    <div class="overlay" id="overlay"></div>
+
+    <div class="salon-container">
+        <div class="sahne">SAHNE</div>
+        
+        <div id="koltukHaritasi"></div>
+
+        <div class="lejant">
+            <div class="lejant-item">
+                <div class="lejant-koltuk"></div>
+                <span>Boş</span>
+            </div>
+            <div class="lejant-item">
+                <div class="lejant-koltuk rezerve"></div>
+                <span>Rezerve</span>
+            </div>
+            <div class="lejant-item">
+                <div class="lejant-koltuk protokol"></div>
+                <span>Protokol</span>
+            </div>
+            <div class="lejant-item">
+                <div class="lejant-koltuk kurumDisi"></div>
+                <span>Kurum Dışı</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-container" id="rezervasyonForm">
+        <h3 id="formBaslik">Koltuk Seçimi</h3>
+        <form id="biletForm">
+            <div>
+                <label for="adSoyad">Ad Soyad:</label>
+                <input type="text" id="adSoyad" required>
+            </div>
+            <div>
+                <label for="email">E-posta (@iletisim.gov.tr):</label>
+                <input type="email" id="email" required>
+            </div>
+            <button type="submit">Rezervasyon Yap</button>
+            <button type="button" onclick="formKapat()">İptal</button>
+        </form>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">Başarılı!</div>
+            <div class="notification-message"></div>
+        </div>
+    </div>
+
+    <div class="qr-modal" id="qrModal">
+        <h3 class="qr-modal-title">Rezervasyonunuz Başarıyla Oluşturuldu!</h3>
+        <p class="qr-modal-text">Lütfen bu QR kodu saklayın. Etkinlik günü girişte kullanacaksınız.</p>
+        <img id="qrImage" src="" alt="QR Kod">
+        <button class="qr-modal-button" onclick="closeQrModal()">Tamam</button>
+    </div>
+
+    <div id="biletContainer" style="display: none;">
+        <!-- ... mevcut bilet içeriği ... -->
+        
+        <div class="print-button-container">
+            <button class="print-button" onclick="yazdir()">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                    <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                </svg>
+                Bileti Yazdır
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const bolumler = [
+            {
+                ad: "Giriş Bölümü",
+                altBolumler: [
+                    { 
+                        ad: "Sahneye yakın bölüm", 
+                        siralar: [8, 8, 8, 8],
+                        ozelDurum: "kurumDisi" 
+                    },
+                    { 
+                        ad: "Bir Arkası", 
+                        siralar: [7, 8, 9, 9, 9, 9, 9]
+                    },
+                    { 
+                        ad: "Üçüncü Bölüm", 
+                        siralar: [9, 9, 9, 9, 9, 9, 9] // 7 sıra, her sırada 9 koltuk
+                    },
+                    { 
+                        ad: "Dördüncü Bölüm", 
+                        siralar: [9, 9, 9, 9, 9, 9] // 6 sıra, her sırada 9 koltuk
+                    }
+                ]
+            },
+            {
+                ad: "Orta Bölüm",
+                altBolumler: [
+                    { 
+                        ad: "Sahneye yakın bölüm", 
+                        siralar: [16, 15, 16, 15],
+                        ozelDurum: "kurumDisi" 
+                    },
+                    { 
+                        ad: "Bir Arkası", 
+                        siralar: [16, 15, 16, 15, 16, 15, 16]
+                    },
+                    { 
+                        ad: "Üçüncü Bölüm", 
+                        siralar: [15, 16, 15, 16, 15, 16, 15] // 7 sıra
+                    },
+                    { 
+                        ad: "Dördüncü Bölüm", 
+                        siralar: [16, 15, 16, 15, 16, 15] // 6 sıra
+                    }
+                ]
+            },
+            {
+                ad: "Son Bölüm",
+                altBolumler: [
+                    { 
+                        ad: "Sahneye yakın bölüm", 
+                        siralar: [8, 8, 8, 7],
+                        ozelDurum: "kurumDisi" 
+                    },
+                    { 
+                        ad: "Bir Arkası", 
+                        siralar: [7, 8, 9, 9, 9, 9, 9]
+                    },
+                    { 
+                        ad: "Üçüncü Bölüm", 
+                        siralar: [9, 9, 9, 9, 9, 9, 9] // 7 sıra
+                    },
+                    { 
+                        ad: "Dördüncü Bölüm", 
+                        siralar: [9, 9, 9, 9, 9, 9] // 6 sıra
+                    }
+                ]
+            }
+        ];
+
+        let secilenKoltuk = null;
+        const koltukHaritasi = document.getElementById('koltukHaritasi');
+        
+        for (let altBolumIndex = 0; altBolumIndex < 4; altBolumIndex++) {
+            const grupDiv = document.createElement('div');
+            grupDiv.className = 'bolum-grup';
+            
+            bolumler.forEach((bolum) => {
+                const altBolum = bolum.altBolumler[altBolumIndex];
+                const altBolumDiv = document.createElement('div');
+                altBolumDiv.className = 'alt-bolum';
+                
+                altBolumDiv.innerHTML = `
+                    <h3 class="alt-bolum-baslik">
+                        ${bolum.ad} - ${altBolum.ad}
+                        ${altBolum.ozelDurum === 'protokol' ? ' (P)' : ''}
+                        ${altBolum.ozelDurum === 'kurumDisi' ? ' (K)' : ''}
+                    </h3>
+                `;
+                
+                altBolum.siralar.forEach((koltukSayisi, siraIndex) => {
+                    const siraDiv = document.createElement('div');
+                    siraDiv.className = 'sira';
+                    
+                    for(let i = 0; i < koltukSayisi; i++) {
+                        const koltuk = document.createElement('div');
+                        const koltukId = `${bolum.ad}-${altBolum.ad}-${siraIndex + 1}-${i + 1}`;
+                        const isProtokolKoltuk = altBolum.ad === "Bir Arkası" && siraIndex < 2;
+                        
+                        koltuk.className = `koltuk ${isProtokolKoltuk ? 'protokol' : altBolum.ozelDurum || ''}`;
+                        koltuk.setAttribute('data-koltuk-id', koltukId);
+                        
+                        koltuk.onclick = () => koltukSec(koltukId, koltuk, isProtokolKoltuk ? 'protokol' : altBolum.ozelDurum, `${siraIndex + 1}-${i + 1}`);
+                        siraDiv.appendChild(koltuk);
+                    }
+                    
+                    altBolumDiv.appendChild(siraDiv);
+                });
+                
+                grupDiv.appendChild(altBolumDiv);
+            });
+            
+            koltukHaritasi.appendChild(grupDiv);
+        }
+
+        function koltukSec(koltukId, element, ozelDurum, koltukNo) {
+            if(ozelDurum || element.classList.contains('rezerve')) return;
+            secilenKoltuk = koltukId;
+            document.getElementById('rezervasyonForm').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('formBaslik').textContent = `Koltuk Seçimi: ${koltukNo}`;
+        }
+
+        function formKapat() {
+            document.getElementById('rezervasyonForm').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        document.getElementById('biletForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const adSoyad = document.getElementById('adSoyad').value;
+
+            if(!email.endsWith('@iletisim.gov.tr')) {
+                alert('Sadece @iletisim.gov.tr uzantılı e-postalar kabul edilmektedir.');
+                return;
+            }
+
+            try {
+                console.log('Gönderilen veri:', {
+                    koltukNo: secilenKoltuk,
+                    adSoyad: adSoyad,
+                    email: email
+                }); // Debug için
+
+                const response = await fetch('/api/rezervasyon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        koltukNo: secilenKoltuk,
+                        adSoyad: adSoyad,
+                        email: email
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Sunucu yanıtı:', result); // Debug için
+
+                if(response.ok) {
+                    showNotification('success', 'Başarılı!', 'Rezervasyonunuz başarıyla oluşturuldu.');
+                    
+                    // Bileti göster
+                    const biletWindow = window.open('', '_blank');
+                    biletWindow.document.write(atob(result.bilet));
+                    biletWindow.document.close();
+                    
+                    document.querySelector(`[data-koltuk-id="${secilenKoltuk}"]`).classList.add('rezerve');
+                    formKapat();
+                    document.getElementById('biletForm').reset();
+                } else {
+                    throw new Error(result.error || 'Rezervasyon işlemi başarısız');
+                }
+            } catch (error) {
+                console.error('Hata detayı:', error);
+                alert('Bir hata oluştu: ' + error.message);
+            }
+        };
+
+        document.querySelector('#rezervasyonForm button[type="button"]').onclick = formKapat;
+
+        // Sayfa yüklendiğinde mevcut rezervasyonları kontrol et
+        async function mevcutRezervasyonlariYukle() {
+            try {
+                const response = await fetch('/api/rezervasyonlar');
+                if(response.ok) {
+                    const rezervasyonlar = await response.json();
+                    rezervasyonlar.forEach(rezervasyon => {
+                        const koltukElement = document.querySelector(`[data-koltuk-id="${rezervasyon.koltukId}"]`);
+                        if(koltukElement) {
+                            koltukElement.classList.add('rezerve');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Rezervasyonlar yüklenirken hata:', error);
+            }
+        }
+
+        // Sayfa yüklendiğinde çağır
+        document.addEventListener('DOMContentLoaded', mevcutRezervasyonlariYukle);
+
+        function showNotification(type, title, message) {
+            const notification = document.getElementById('notification');
+            notification.className = `notification ${type}`;
+            notification.querySelector('.notification-title').textContent = title;
+            notification.querySelector('.notification-message').textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+
+        function showQrModal(qrCode) {
+            const modal = document.getElementById('qrModal');
+            const qrImage = document.getElementById('qrImage');
+            qrImage.src = qrCode;
+            modal.classList.add('show');
+        }
+
+        function closeQrModal() {
+            const modal = document.getElementById('qrModal');
+            modal.classList.remove('show');
+        }
+
+        // Yazdırma fonksiyonu
+        function yazdir() {
+            window.print();
+        }
+    </script>
+</body>
+</html> 
